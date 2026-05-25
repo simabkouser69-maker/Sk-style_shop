@@ -301,6 +301,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ===== AUTH MODALS =====
   initAuthModals();
+
+  // ===== HELP MODAL =====
+  initHelpModal();
 });
 
 // ===== AUTH MODALS SYSTEM =====
@@ -471,14 +474,122 @@ function initAuthModals() {
     showToast('Password reset link sent to your email 📧');
   });
 
+  // Google options logic
+  const googleOptionsOverlay = $('#googleOptionsOverlay');
+  const googleOptionsModal = $('#googleOptionsModal');
+  const googleOptionsClose = $('#googleOptionsClose');
+  const googleOptionsTitle = $('#googleOptionsTitle');
+  const googleOptionsSubtitle = $('#googleOptionsSubtitle');
+  const googleOptEmailBtn = $('#googleOptEmailBtn');
+  const googleOptEmailText = $('#googleOptEmailText');
+  const googleOptGoogleBtn = $('#googleOptGoogleBtn');
+  const googleOptGoogleText = $('#googleOptGoogleText');
+
+  let currentAuthContext = 'login'; // 'login' or 'signup'
+
+  function openGoogleOptions(context) {
+    currentAuthContext = context;
+    if (context === 'login') {
+      googleOptionsTitle.textContent = 'Google Sign In';
+      googleOptionsSubtitle.textContent = 'Choose your preferred sign-in option to continue';
+      googleOptEmailText.textContent = 'Sign in with Email';
+      googleOptGoogleText.textContent = 'Sign in with Google';
+    } else {
+      googleOptionsTitle.textContent = 'Google Sign Up';
+      googleOptionsSubtitle.textContent = 'Choose your preferred sign-up option to continue';
+      googleOptEmailText.textContent = 'Sign up with Email';
+      googleOptGoogleText.textContent = 'Sign up with Google';
+    }
+    googleOptionsOverlay.classList.add('active');
+    googleOptionsModal.classList.remove('closing');
+    googleOptionsModal.classList.add('active');
+  }
+
+  function closeGoogleOptions() {
+    googleOptionsModal.classList.add('closing');
+    setTimeout(() => {
+      googleOptionsModal.classList.remove('active', 'closing');
+      googleOptionsOverlay.classList.remove('active');
+    }, 300);
+  }
+
+  // Bind close events
+  if (googleOptionsClose) googleOptionsClose.addEventListener('click', closeGoogleOptions);
+  if (googleOptionsOverlay) googleOptionsOverlay.addEventListener('click', closeGoogleOptions);
+
+  // Email choice
+  if (googleOptEmailBtn) {
+    googleOptEmailBtn.addEventListener('click', e => {
+      e.preventDefault();
+      closeGoogleOptions();
+      if (currentAuthContext === 'login') {
+        // Focus on Password tab and input
+        const tabPassword = $('#tabPassword');
+        if (tabPassword) tabPassword.click();
+        setTimeout(() => {
+          const emailInput = $('#loginEmail');
+          if (emailInput) emailInput.focus();
+          showToast('Please enter your email or phone number to sign in ✉️');
+        }, 350);
+      } else {
+        // Focus on Signup Email field
+        setTimeout(() => {
+          const signupEmailInput = $('#signupEmail');
+          if (signupEmailInput) signupEmailInput.focus();
+          showToast('Please enter your email to create an account ✉️');
+        }, 350);
+      }
+    });
+  }
+
+  // Google choice
+  if (googleOptGoogleBtn) {
+    googleOptGoogleBtn.addEventListener('click', e => {
+      e.preventDefault();
+      closeGoogleOptions();
+      
+      // Close the main modal as well
+      if (currentAuthContext === 'login') {
+        const loginModal = $('#loginModal');
+        if (loginModal) closeModal(loginModal);
+      } else {
+        const signupModal = $('#signupModal');
+        if (signupModal) closeModal(signupModal);
+      }
+
+      // Simulate Google Authentication
+      showToast('Connecting to Google... 🌐');
+      setTimeout(() => {
+        if (currentAuthContext === 'login') {
+          showToast('Welcome! Logged in with Google successfully ✨');
+        } else {
+          showToast('Account created with Google successfully 🎉');
+        }
+      }, 1500);
+    });
+  }
+
+  // ESC key to close Google Options
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && googleOptionsModal && googleOptionsModal.classList.contains('active')) {
+      closeGoogleOptions();
+    }
+  });
+
   // Social buttons
   ['googleLoginBtn', 'facebookLoginBtn', 'googleSignupBtn', 'facebookSignupBtn'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('click', e => {
         e.preventDefault();
-        const provider = id.includes('google') ? 'Google' : 'Facebook';
-        showToast(`Connecting to ${provider}...`);
+        if (id === 'googleLoginBtn') {
+          openGoogleOptions('login');
+        } else if (id === 'googleSignupBtn') {
+          openGoogleOptions('signup');
+        } else {
+          const provider = id.includes('facebook') ? 'Facebook' : 'Google';
+          showToast(`Connecting to ${provider}...`);
+        }
       });
     }
   });
@@ -598,5 +709,73 @@ function startOtpTimer() {
       showToast('OTP resent! 📱');
       startOtpTimer();
     }
+  });
+}
+
+// ===== HELP & SUPPORT MODAL SYSTEM =====
+function initHelpModal() {
+  const overlay = $('#helpOverlay');
+  const modal = $('#helpModal');
+  const closeBtn = $('#helpClose');
+  const triggers = [$('#helpLink'), $('#footerHelpLink')];
+
+  function openHelp() {
+    overlay.classList.add('active');
+    modal.classList.remove('closing');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Auto-expand the first accordion item by default
+    const firstItem = $('.help-accordion-item');
+    if (firstItem && !firstItem.classList.contains('active')) {
+      firstItem.classList.add('active');
+    }
+  }
+
+  function closeHelp() {
+    modal.classList.add('closing');
+    setTimeout(() => {
+      modal.classList.remove('active', 'closing');
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }, 300);
+  }
+
+  // Bind open triggers
+  triggers.forEach(t => {
+    if (t) {
+      t.addEventListener('click', e => {
+        e.preventDefault();
+        openHelp();
+      });
+    }
+  });
+
+  // Bind close triggers
+  if (closeBtn) closeBtn.addEventListener('click', closeHelp);
+  if (overlay) overlay.addEventListener('click', closeHelp);
+
+  // ESC to close
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+      closeHelp();
+    }
+  });
+
+  // Accordion Logic
+  const headers = $$('.help-accordion-header');
+  headers.forEach(header => {
+    header.addEventListener('click', () => {
+      const item = header.closest('.help-accordion-item');
+      const isActive = item.classList.contains('active');
+
+      // Close all other items (single-expand behavior)
+      $$('.help-accordion-item').forEach(el => el.classList.remove('active'));
+
+      // Toggle current item
+      if (!isActive) {
+        item.classList.add('active');
+      }
+    });
   });
 }
