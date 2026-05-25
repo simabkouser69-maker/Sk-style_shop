@@ -320,6 +320,8 @@ input { font-family: inherit; }
 .footer-col ul li a { color:var(--text-muted); font-size:13px; transition:var(--transition); }
 .footer-col ul li a:hover { color:var(--primary-light); padding-left:4px; }
 .footer-contact p { font-size:13px; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.footer-contact p a { transition: var(--transition); }
+.footer-contact p a:hover { color: var(--primary-light); }
 .footer-social { display:flex; gap:12px; margin-top:16px; }
 .footer-social a {
   width:38px; height:38px; border-radius:50%; border:1px solid rgba(201,149,107,0.3);
