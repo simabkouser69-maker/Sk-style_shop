@@ -90,6 +90,78 @@ input { font-family: inherit; }
 }
 .search-bar button:hover { opacity:0.9; transform:scale(1.02); }
 
+/* ===== SEARCH SUGGESTIONS ===== */
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  margin-top: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 1001;
+  display: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+.search-suggestions::-webkit-scrollbar { width: 5px; }
+.search-suggestions::-webkit-scrollbar-track { background: transparent; }
+.search-suggestions::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+.search-suggestions.active {
+  display: block;
+}
+
+.suggestion-item {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  color: var(--text-dark);
+  font-size: 13.5px;
+  transition: var(--transition);
+  border-bottom: 1px solid rgba(0,0,0,0.02);
+  text-align: left;
+}
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+.suggestion-item i.fa-search {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.suggestion-item i.fa-arrow-up {
+  transform: rotate(45deg);
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-left: auto;
+  opacity: 0.5;
+  transition: var(--transition);
+}
+.suggestion-item:hover, .suggestion-item.selected {
+  background: rgba(201,149,107,0.08);
+  color: var(--primary-dark);
+}
+.suggestion-item:hover i.fa-arrow-up, .suggestion-item.selected i.fa-arrow-up {
+  color: var(--primary);
+  opacity: 1;
+}
+.suggestion-item .highlight {
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+.no-suggestions {
+  padding: 18px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 .header-icons { display:flex; gap:20px; align-items:center; }
 .header-icon {
   color:var(--text-muted); font-size:22px; position:relative; transition:var(--transition);

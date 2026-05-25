@@ -274,6 +274,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Search
   $('#searchBtn').addEventListener('click', handleSearch);
   $('#searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') handleSearch(); });
+  
+  // Search Suggestions
+  initSearchSuggestions();
 
   // Newsletter
   $('#newsletterForm').addEventListener('submit', e => {
@@ -777,5 +780,143 @@ function initHelpModal() {
         item.classList.add('active');
       }
     });
+  });
+}
+
+// ===== SEARCH SUGGESTIONS SYSTEM =====
+function initSearchSuggestions() {
+  const input = $('#searchInput');
+  const suggestionsBox = $('#searchSuggestions');
+  let selectedIndex = -1;
+
+  if (!input || !suggestionsBox) return;
+
+  function getSuggestions(q) {
+    if (!q) return [];
+    
+    // Filter products whose names contain query string, or category matches
+    return products.filter(p => 
+      p.name.toLowerCase().includes(q) || 
+      p.category.toLowerCase().includes(q)
+    ).slice(0, 8); // Limit to 8 suggestions for a neat presentation
+  }
+
+  function renderSuggestions(matches, query) {
+    if (matches.length === 0) {
+      suggestionsBox.innerHTML = `<div class="no-suggestions">No suggestions found for "${escapeHtml(query)}"</div>`;
+      return;
+    }
+
+    suggestionsBox.innerHTML = matches.map((product, i) => {
+      // Highlight matching characters in the name
+      const name = product.name;
+      const index = name.toLowerCase().indexOf(query.toLowerCase());
+      let displayName = name;
+      
+      if (index >= 0) {
+        const prefix = name.substring(0, index);
+        const match = name.substring(index, index + query.length);
+        const suffix = name.substring(index + query.length);
+        displayName = `${escapeHtml(prefix)}<span class="highlight">${escapeHtml(match)}</span>${escapeHtml(suffix)}`;
+      } else {
+        displayName = escapeHtml(name);
+      }
+
+      return `
+        <div class="suggestion-item" data-index="${i}" data-value="${escapeHtml(product.name)}">
+          <i class="fas fa-search"></i>
+          <span>${displayName}</span>
+          <i class="fas fa-arrow-up"></i>
+        </div>
+      `;
+    }).join('');
+
+    // Attach click events to suggestion items
+    $$('.suggestion-item').forEach(item => {
+      item.addEventListener('click', () => {
+        input.value = item.dataset.value;
+        hideSuggestions();
+        handleSearch();
+      });
+    });
+  }
+
+  function showSuggestions() {
+    suggestionsBox.classList.add('active');
+  }
+
+  function hideSuggestions() {
+    suggestionsBox.classList.remove('active');
+    selectedIndex = -1;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+
+  // Handle typing input
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    if (!q) {
+      hideSuggestions();
+      return;
+    }
+    const matches = getSuggestions(q);
+    renderSuggestions(matches, q);
+    showSuggestions();
+  });
+
+  // Handle focus
+  input.addEventListener('focus', () => {
+    const q = input.value.toLowerCase().trim();
+    if (q) {
+      const matches = getSuggestions(q);
+      renderSuggestions(matches, q);
+      showSuggestions();
+    }
+  });
+
+  // Keyboard navigation
+  input.addEventListener('keydown', e => {
+    const items = $$('.suggestion-item');
+    if (!suggestionsBox.classList.contains('active') || items.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectedIndex = (selectedIndex + 1) % items.length;
+      updateSelection(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+      updateSelection(items);
+    } else if (e.key === 'Enter') {
+      if (selectedIndex >= 0 && items[selectedIndex]) {
+        e.preventDefault();
+        input.value = items[selectedIndex].dataset.value;
+        hideSuggestions();
+        handleSearch();
+      } else {
+        hideSuggestions();
+      }
+    } else if (e.key === 'Escape') {
+      hideSuggestions();
+    }
+  });
+
+  function updateSelection(items) {
+    items.forEach((item, idx) => {
+      item.classList.toggle('selected', idx === selectedIndex);
+      if (idx === selectedIndex) {
+        input.value = item.dataset.value;
+        item.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
+
+  // Close suggestions when clicking outside
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#searchBar')) {
+      hideSuggestions();
+    }
   });
 }
